@@ -133,3 +133,19 @@ Response:
 `200 OK` for successful deletion
 
 `400 Bad Request` for failed deletion
+
+- Register client
+
+`[POST] /clients`
+```json
+{
+    "email": "<email>",
+    "password": "<password>"
+}
+```
+
+Response:
+
+`200 OK` for successful registration
+
+`400 Bad Request` for failed registration
