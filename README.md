@@ -200,3 +200,10 @@ Response body:
 ```
 
 `400 Bad Request` for failed retrieval
+
+## Steps to run Manager app
+
+- Add the path to your local fabric-samples directory in FabricService class ("parentPath")
+- Navigate to the fabric-gateway-app folder. Build the source code and run the app from this folder.
+- Command to build : "mvn clean install"
+- Command to run app : "java -jar target/fabric-gateway-app-1.0-SNAPSHOT.jar"
