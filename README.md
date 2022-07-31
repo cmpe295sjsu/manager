@@ -149,3 +149,53 @@ Response:
 `200 OK` for successful registration
 
 `400 Bad Request` for failed registration
+
+- Get list of devices
+
+`[GET] /devices`
+
+Response:
+    
+`200 OK` for successful retrieval
+Response body:
+```json
+{
+    "devices": [
+        {
+            "id": "<id>",
+            "name": "<name>",
+            "region": "<region>",
+            "ipfs": "<ipfs_hash>",
+            "updated_at": "<timestamp>"
+        },
+        ...
+    ]
+}
+```
+
+`400 Bad Request` for failed retrieval
+
+- Get list of devices
+
+`[GET] /policies`
+
+Response:
+    
+`200 OK` for successful retrieval
+Response body:
+```json
+{
+    "policies": [
+        {
+            "id": "<id>",
+            "name": "<name>",
+            "authorized_devices": [
+                "<device_id>",
+            ]
+        },
+        ...
+    ]
+}
+```
+
+`400 Bad Request` for failed retrieval
