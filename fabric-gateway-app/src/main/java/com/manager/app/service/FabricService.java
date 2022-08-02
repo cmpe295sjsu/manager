@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 public final class FabricService {
     private final String mspID = "Org1MSP";
     private final String channelName = "mychannel";
-    private final String chaincodeName = "basic2";
+    private final String chaincodeName = "basic";
     private final Path parentPath = Paths.get("/Users/deepakravi/go/src/github.com/sandhya1902/fabric-samples/");
     private Path cryptoPath = parentPath.resolve(Paths.get("test-network", "organizations", "peerOrganizations", "org1.example.com"));
     // Path to user certificate.
@@ -67,10 +67,10 @@ public final class FabricService {
         var channel = newGrpcConnection();
         var builder = Gateway.newInstance().identity(newIdentity()).signer(newSigner()).connection(channel)
                 // Default timeouts for different gRPC calls
-                .evaluateOptions(options -> options.withDeadlineAfter(5, TimeUnit.SECONDS))
-                .endorseOptions(options -> options.withDeadlineAfter(15, TimeUnit.SECONDS))
-                .submitOptions(options -> options.withDeadlineAfter(5, TimeUnit.SECONDS))
-                .commitStatusOptions(options -> options.withDeadlineAfter(1, TimeUnit.MINUTES));
+                .evaluateOptions(options -> options.withDeadlineAfter(30, TimeUnit.SECONDS))
+                .endorseOptions(options -> options.withDeadlineAfter(30, TimeUnit.SECONDS))
+                .submitOptions(options -> options.withDeadlineAfter(30, TimeUnit.SECONDS));
+                //.commitStatusOptions(options -> options.withDeadlineAfter(1, TimeUnit.MINUTES));
 
         Gateway gateway = builder.connect();
         var network = gateway.getNetwork(channelName);
@@ -119,7 +119,8 @@ public final class FabricService {
             return prettyJson(result);
         } catch (EndorseException | SubmitException | CommitStatusException | CommitException e) {
             System.out.println(e.getMessage());
-            return "Error while registering new device.";
+            e.printStackTrace();
+            return "Error while registering new device: " + e.getMessage();
         }
     }
 
@@ -144,6 +145,7 @@ public final class FabricService {
             return assets;
         } catch (GatewayException | JsonProcessingException e) {
             System.out.println(e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }
@@ -187,7 +189,7 @@ public final class FabricService {
         } catch (EndorseException | SubmitException | CommitStatusException | CommitException e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
-            return "Error while updating policy";
+            return "Error updating policy: " + e.getMessage();
         }
     }
 
@@ -201,6 +203,7 @@ public final class FabricService {
             return prettyJson(evaluateResult);
         } catch (GatewayException e) {
             System.out.println(e.getMessage());
+            e.printStackTrace();
             return "Error fetching IPFS hash: " + e.getMessage();
         }
     }

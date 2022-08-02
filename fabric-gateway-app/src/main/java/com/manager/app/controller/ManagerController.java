@@ -24,7 +24,7 @@ public class ManagerController {
     public ResponseEntity registerNewDevice(@RequestBody DeviceRegistrationInfo deviceInfo) {
         String result = fabricService.createAsset(deviceInfo.owner, deviceInfo.name, deviceInfo.region);
         if(result.contains("Error"))
-            return new ResponseEntity<>(getJsonString("Error registering new device."), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getJsonString(result), HttpStatus.BAD_REQUEST);
         else
             return new ResponseEntity<>(getJsonString(result), HttpStatus.OK);
     }
@@ -34,7 +34,7 @@ public class ManagerController {
     public ResponseEntity updateAccessPolicy(@RequestBody DeviceAccessPolicy accessPolicy) {
         String result = fabricService.updateAccessPolicy(accessPolicy.device_id, accessPolicy.getAccessing_device_id(), accessPolicy.getAccessing_user_id());
         if(result.contains("Error"))
-            return new ResponseEntity<>(getJsonString("Error updating access policy"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getJsonString(result), HttpStatus.BAD_REQUEST);
         else
             return new ResponseEntity<>(getJsonString("Access policy updated!"), HttpStatus.OK);
     }
