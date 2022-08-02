@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 public final class FabricService {
     private final String mspID = "Org1MSP";
     private final String channelName = "mychannel";
-    private final String chaincodeName = "basic";
+    private final String chaincodeName = "basic2";
     private final Path parentPath = Paths.get("/Users/deepakravi/go/src/github.com/sandhya1902/fabric-samples/");
     private Path cryptoPath = parentPath.resolve(Paths.get("test-network", "organizations", "peerOrganizations", "org1.example.com"));
     // Path to user certificate.
@@ -107,13 +107,15 @@ public final class FabricService {
         }
     }
 
+    //TODO fetchIPFSHashForDeviceFromUser returns a string - prettyJson(..) may not work here
     public String createAsset(String owner, String name, String region) {
         System.out.println("\n--> Submit Transaction: createAsset");
         byte[] result;
         try {
             result = contract.submitTransaction("CreateNewDevice", owner, name, region);
             System.out.println("*** createAsset transaction committed successfully");
-            System.out.println(prettyJson(result));
+            System.out.println("result formatted  "+new String(result, StandardCharsets.UTF_8));
+            //System.out.println(prettyJson(result));
             return prettyJson(result);
         } catch (EndorseException | SubmitException | CommitStatusException | CommitException e) {
             System.out.println(e.getMessage());
@@ -125,7 +127,19 @@ public final class FabricService {
         System.out.println("\n--> Evaluate Transaction: GetAllAssets");
         try {
             byte[] result = contract.evaluateTransaction("GetAllAssets");
-            String assetString = prettyJson(result);
+            /*System.out.println("result  "+result);
+            System.out.println("result formatted  "+new String(result, StandardCharsets.UTF_8));
+            System.out.println("result empty  "+result.toString().isEmpty());
+            System.out.println("result blank  "+result.toString().isBlank());
+            System.out.println("result formatted blank   "+(new String(result, StandardCharsets.UTF_8)).isBlank());
+            System.out.println("result formatted empty  "+(new String(result, StandardCharsets.UTF_8)).isEmpty());
+            */String assetString = prettyJson(result);
+            /*System.out.println("assetstring  "+assetString);
+            System.out.println("assetstring empty  "+assetString.isEmpty());
+            System.out.println("assetstring blank  "+assetString.isBlank());
+            System.out.println("assetstring null string  "+(assetString == "null"));*/
+            if((new String(result, StandardCharsets.UTF_8)).isBlank())
+                return new ArrayList<>();
             ArrayList<Asset> assets = Lists.newArrayList(mapper.readValue(assetString, Asset[].class));
             return assets;
         } catch (GatewayException | JsonProcessingException e) {
@@ -155,37 +169,39 @@ public final class FabricService {
         }
     }
 
-    public boolean updateAccessPolicy(String deviceId, ArrayList<String> authorizedDevices,
+    public String updateAccessPolicy(String deviceId, ArrayList<String> authorizedDevices,
                                     ArrayList<String> authorizedUsers) {
         try {
             System.out.println("\n--> Submit Transaction: updateAccessPolicy");
             // if any parameter is null, set it to empty string
             Asset originalAsset = readAsset(deviceId);
             if (originalAsset == null){
-                return false;
+                return "Error updating policy: either this ID doesn't exist or there was an issue on Fabric side while reading asset.";
             }
             originalAsset.authorizedDevices.addAll(authorizedDevices);
             originalAsset.authorizedUsers.addAll(authorizedUsers);
             contract.submitTransaction("UpdateAsset", deviceId, originalAsset.owner, originalAsset.name, originalAsset.region,
                     originalAsset.iPFSHash, new Gson().toJson(originalAsset.authorizedDevices), new Gson().toJson(originalAsset.authorizedUsers));
             System.out.println("******** updateAccessPolicy transaction committed successfully");
-            return true;
+            return "Success";
         } catch (EndorseException | SubmitException | CommitStatusException | CommitException e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
-            return false;
+            return "Error while updating policy";
         }
     }
 
+    //TODO fetchIPFSHashForDeviceFromUser returns a string - prettyJson(..) may not work here
     public String fetchIPFSHashFromUser(String userEmail, String targetDeviceId){
         System.out.println("\n--> Submit Transaction: fetchIPFSHashFromUser");
         try {
             byte[] evaluateResult = contract.evaluateTransaction("fetchIPFSHashForDeviceFromUser", userEmail, targetDeviceId);
             System.out.println("******** fetchIPFSHashFromUser transaction committed successfully");
+            System.out.println("result formatted  "+new String(evaluateResult, StandardCharsets.UTF_8));
             return prettyJson(evaluateResult);
         } catch (GatewayException e) {
             System.out.println(e.getMessage());
-            return "Error! Could not fetch IPFS hash for device with ID " + targetDeviceId;
+            return "Error fetching IPFS hash: " + e.getMessage();
         }
     }
 
