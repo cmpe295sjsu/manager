@@ -4,27 +4,37 @@ import java.util.ArrayList;
 
 public class DeviceAccessPolicy {
 
-    public ArrayList<String> authorizedDevices;
-    public ArrayList<String> authorizedUsers;
+    public String device_id;
+    public ArrayList<String> accessing_device_id;
+    public ArrayList<String> accessing_user_id;
 
-    public DeviceAccessPolicy(ArrayList<String> authorizedDevices, ArrayList<String> authorizedUsers) {
-        this.authorizedDevices = authorizedDevices;
-        this.authorizedUsers = authorizedUsers;
+    public DeviceAccessPolicy(String id, ArrayList<String> authorizedDevices, ArrayList<String> authorizedUsers) {
+        this.device_id = id;
+        this.accessing_device_id = authorizedDevices;
+        this.accessing_user_id = authorizedUsers;
     }
 
-    public ArrayList<String> getAuthorizedDevices() {
-        return authorizedDevices;
+    public String getDevice_id() {
+        return device_id;
     }
 
-    public void setAuthorizedDevices(ArrayList<String> authorizedDevices) {
-        this.authorizedDevices = authorizedDevices;
+    public void setDevice_id(String device_id) {
+        this.device_id = device_id;
     }
 
-    public ArrayList<String> getAuthorizedUsers() {
-        return authorizedUsers;
+    public ArrayList<String> getAccessing_device_id() {
+        return accessing_device_id;
     }
 
-    public void setAuthorizedUsers(ArrayList<String> authorizedUsers) {
-        this.authorizedUsers = authorizedUsers;
+    public void setAccessing_device_id(ArrayList<String> accessing_device_id) {
+        this.accessing_device_id = accessing_device_id;
+    }
+
+    public ArrayList<String> getAccessing_user_id() {
+        return accessing_user_id;
+    }
+
+    public void setAccessing_user_id(ArrayList<String> accessing_user_id) {
+        this.accessing_user_id = accessing_user_id;
     }
 }

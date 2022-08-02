@@ -2,6 +2,7 @@ package com.manager.app.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
@@ -106,15 +107,17 @@ public final class FabricService {
         }
     }
 
-    public boolean createAsset(String owner) {
+    public String createAsset(String owner, String name, String region) {
         System.out.println("\n--> Submit Transaction: createAsset");
+        byte[] result;
         try {
-            contract.submitTransaction("CreateNewDevice", owner);
+            result = contract.submitTransaction("CreateNewDevice", owner, name, region);
             System.out.println("*** createAsset transaction committed successfully");
-            return true;
+            System.out.println(prettyJson(result));
+            return prettyJson(result);
         } catch (EndorseException | SubmitException | CommitStatusException | CommitException e) {
             System.out.println(e.getMessage());
-            return false;
+            return "Error while registering new device.";
         }
     }
 
@@ -123,7 +126,7 @@ public final class FabricService {
         try {
             byte[] result = contract.evaluateTransaction("GetAllAssets");
             String assetString = prettyJson(result);
-            ArrayList<Asset> assets = mapper.readValue(assetString, ArrayList.class);
+            ArrayList<Asset> assets = Lists.newArrayList(mapper.readValue(assetString, Asset[].class));
             return assets;
         } catch (GatewayException | JsonProcessingException e) {
             System.out.println(e.getMessage());
@@ -161,10 +164,10 @@ public final class FabricService {
             if (originalAsset == null){
                 return false;
             }
-            String authorizedDevicesArg, authorizedUsersArg;
-            authorizedDevicesArg = authorizedDevices == null ? new Gson().toJson(originalAsset.authorizedDevices) : new Gson().toJson(authorizedDevices);
-            authorizedUsersArg = authorizedUsers == null ? new Gson().toJson(originalAsset.authorizedUsers) : new Gson().toJson(authorizedUsers);
-            contract.submitTransaction("UpdateAsset", deviceId, originalAsset.owner, originalAsset.iPFSHash, authorizedDevicesArg, authorizedUsersArg);
+            originalAsset.authorizedDevices.addAll(authorizedDevices);
+            originalAsset.authorizedUsers.addAll(authorizedUsers);
+            contract.submitTransaction("UpdateAsset", deviceId, originalAsset.owner, originalAsset.name, originalAsset.region,
+                    originalAsset.iPFSHash, new Gson().toJson(originalAsset.authorizedDevices), new Gson().toJson(originalAsset.authorizedUsers));
             System.out.println("******** updateAccessPolicy transaction committed successfully");
             return true;
         } catch (EndorseException | SubmitException | CommitStatusException | CommitException e) {

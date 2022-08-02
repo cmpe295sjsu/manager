@@ -8,10 +8,16 @@ public class Asset {
     public String id;
     @JsonProperty("Owner")
     public String owner;
+    @JsonProperty("Name")
+    public String name;
+    @JsonProperty("Region")
+    public String region;
     @JsonProperty("IPFSHash")
     public String iPFSHash;
     @JsonProperty("AuthorizedDevices")
     public ArrayList<String> authorizedDevices;
     @JsonProperty("AuthorizedUsers")
     public ArrayList<String> authorizedUsers;
+    @JsonProperty("UpdatedAt")
+    public String updatedAt;
 }
