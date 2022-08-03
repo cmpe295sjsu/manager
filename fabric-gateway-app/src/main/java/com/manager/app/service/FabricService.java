@@ -10,7 +10,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import com.manager.app.model.Asset;
-import com.manager.app.model.FabricProperties;
 import org.hyperledger.fabric.client.CommitException;
 import org.hyperledger.fabric.client.CommitStatusException;
 import org.hyperledger.fabric.client.Contract;
@@ -69,8 +68,8 @@ public final class FabricService {
                 // Default timeouts for different gRPC calls
                 .evaluateOptions(options -> options.withDeadlineAfter(30, TimeUnit.SECONDS))
                 .endorseOptions(options -> options.withDeadlineAfter(30, TimeUnit.SECONDS))
-                .submitOptions(options -> options.withDeadlineAfter(30, TimeUnit.SECONDS));
-                //.commitStatusOptions(options -> options.withDeadlineAfter(1, TimeUnit.MINUTES));
+                .submitOptions(options -> options.withDeadlineAfter(30, TimeUnit.SECONDS))
+                .commitStatusOptions(options -> options.withDeadlineAfter(1, TimeUnit.MINUTES));
 
         Gateway gateway = builder.connect();
         var network = gateway.getNetwork(channelName);
@@ -107,16 +106,12 @@ public final class FabricService {
         }
     }
 
-    //TODO fetchIPFSHashForDeviceFromUser returns a string - prettyJson(..) may not work here
     public String createAsset(String owner, String name, String region) {
         System.out.println("\n--> Submit Transaction: createAsset");
         byte[] result;
         try {
             result = contract.submitTransaction("CreateNewDevice", owner, name, region);
-            System.out.println("*** createAsset transaction committed successfully");
-            System.out.println("result formatted  "+new String(result, StandardCharsets.UTF_8));
-            //System.out.println(prettyJson(result));
-            return prettyJson(result);
+            return new String(result, StandardCharsets.UTF_8);
         } catch (EndorseException | SubmitException | CommitStatusException | CommitException e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
@@ -128,17 +123,7 @@ public final class FabricService {
         System.out.println("\n--> Evaluate Transaction: GetAllAssets");
         try {
             byte[] result = contract.evaluateTransaction("GetAllAssets");
-            /*System.out.println("result  "+result);
-            System.out.println("result formatted  "+new String(result, StandardCharsets.UTF_8));
-            System.out.println("result empty  "+result.toString().isEmpty());
-            System.out.println("result blank  "+result.toString().isBlank());
-            System.out.println("result formatted blank   "+(new String(result, StandardCharsets.UTF_8)).isBlank());
-            System.out.println("result formatted empty  "+(new String(result, StandardCharsets.UTF_8)).isEmpty());
-            */String assetString = prettyJson(result);
-            /*System.out.println("assetstring  "+assetString);
-            System.out.println("assetstring empty  "+assetString.isEmpty());
-            System.out.println("assetstring blank  "+assetString.isBlank());
-            System.out.println("assetstring null string  "+(assetString == "null"));*/
+            String assetString = prettyJson(result);
             if((new String(result, StandardCharsets.UTF_8)).isBlank())
                 return new ArrayList<>();
             ArrayList<Asset> assets = Lists.newArrayList(mapper.readValue(assetString, Asset[].class));
@@ -175,10 +160,9 @@ public final class FabricService {
                                     ArrayList<String> authorizedUsers) {
         try {
             System.out.println("\n--> Submit Transaction: updateAccessPolicy");
-            // if any parameter is null, set it to empty string
             Asset originalAsset = readAsset(deviceId);
             if (originalAsset == null){
-                return "Error updating policy: either this ID doesn't exist or there was an issue on Fabric side while reading asset.";
+                return "Error updating policy: either this device ID doesn't exist or there was an issue on the Fabric side while reading the asset.";
             }
             originalAsset.authorizedDevices.addAll(authorizedDevices);
             originalAsset.authorizedUsers.addAll(authorizedUsers);
@@ -194,7 +178,7 @@ public final class FabricService {
     }
 
     //TODO fetchIPFSHashForDeviceFromUser returns a string - prettyJson(..) may not work here
-    public String fetchIPFSHashFromUser(String userEmail, String targetDeviceId){
+    /*public String fetchIPFSHashFromUser(String userEmail, String targetDeviceId){
         System.out.println("\n--> Submit Transaction: fetchIPFSHashFromUser");
         try {
             byte[] evaluateResult = contract.evaluateTransaction("fetchIPFSHashForDeviceFromUser", userEmail, targetDeviceId);
@@ -206,9 +190,22 @@ public final class FabricService {
             e.printStackTrace();
             return "Error fetching IPFS hash: " + e.getMessage();
         }
+    }*/
+
+    public String fetchIPFSHashFromUser(String userEmail, String targetDeviceId){
+        Asset asset = readAsset(targetDeviceId);
+        if (asset == null){
+            return "Error updating policy: either this ID doesn't exist or there was an issue on Fabric side while reading asset.";
+        }
+        for(String email: asset.authorizedUsers){
+            if (userEmail.equals(email)){
+                return asset.iPFSHash;
+            }
+        }
+        return "Unauthorized: This user is not authorized to access requested device.";
     }
 
-    public String fetchIPFSHashFromDevice(String requestingDeviceId, String targetDeviceId){
+    /*public String fetchIPFSHashFromDevice(String requestingDeviceId, String targetDeviceId){
         System.out.println("\n--> Submit Transaction: fetchIPFSHashFromDevice");
         try {
             byte[] evaluateResult = contract.evaluateTransaction("fetchIPFSHashForDeviceFromUser", requestingDeviceId, targetDeviceId);
@@ -218,6 +215,6 @@ public final class FabricService {
             System.out.println(e.getMessage());
             return "Error! Could not fetch IPFS hash for device with ID " + targetDeviceId;
         }
-    }
+    }*/
 
 }

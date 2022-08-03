@@ -19,17 +19,15 @@ public class ManagerController {
     ArrayList<ClientCredentials> registeredUsers = new ArrayList<>();
     ArrayList<ClientCredentials> registeredClients = new ArrayList<>();
 
-    //@PostMapping("/devices")
     @RequestMapping(value = "/devices", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity registerNewDevice(@RequestBody DeviceRegistrationInfo deviceInfo) {
         String result = fabricService.createAsset(deviceInfo.owner, deviceInfo.name, deviceInfo.region);
         if(result.contains("Error"))
             return new ResponseEntity<>(getJsonString(result), HttpStatus.BAD_REQUEST);
         else
-            return new ResponseEntity<>(getJsonString(result), HttpStatus.OK);
+            return new ResponseEntity<>(getJsonString("deviceID", result), HttpStatus.OK);
     }
 
-    //@PostMapping("/policies")
     @RequestMapping(value = "/policies", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity updateAccessPolicy(@RequestBody DeviceAccessPolicy accessPolicy) {
         String result = fabricService.updateAccessPolicy(accessPolicy.device_id, accessPolicy.getAccessing_device_id(), accessPolicy.getAccessing_user_id());
@@ -39,7 +37,6 @@ public class ManagerController {
             return new ResponseEntity<>(getJsonString("Access policy updated!"), HttpStatus.OK);
     }
 
-    //@GetMapping("/ipfs-hash/{deviceId}")
     @RequestMapping(value = "/ipfs-hash/{deviceId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity fetchIPFSHashForDevice(@PathVariable String deviceId, @RequestBody ClientCredentials clientCredentials) {
         for(ClientCredentials cc: registeredClients){
@@ -47,15 +44,14 @@ public class ManagerController {
                 String result = fabricService.fetchIPFSHashFromUser(clientCredentials.email, deviceId);
                 if(result.contains("Error"))
                     return new ResponseEntity<>(getJsonString(result), HttpStatus.BAD_REQUEST);
-                JSONObject jsonObj = new JSONObject();
-                jsonObj.put("ipfsHash", result);
-                return new ResponseEntity<>(jsonObj.toString(), HttpStatus.OK);
+                if(result.contains("Unauthorized"))
+                    return new ResponseEntity<>(getJsonString(result), HttpStatus.UNAUTHORIZED);
+                return new ResponseEntity<>(getJsonString("ipfsHash", result), HttpStatus.OK);
             }
         }
         return new ResponseEntity<>(getJsonString("Authentication failed. Please enter valid email ID and password."), HttpStatus.UNAUTHORIZED);
     }
 
-    //@GetMapping("/devices")
     @RequestMapping(value = "/devices", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getAllDevices() {
         ArrayList<Asset> assets = fabricService.getAllAssets();
@@ -66,10 +62,9 @@ public class ManagerController {
             DeviceInfo deviceInfo = new DeviceInfo(asset.id, asset.owner, asset.name, asset.region, asset.iPFSHash, asset.updatedAt);
             devices.add(deviceInfo);
         }
-        return new ResponseEntity<>(devices, HttpStatus.OK);
+        return new ResponseEntity<>(getJsonString("devices", devices), HttpStatus.OK);
     }
 
-    //@GetMapping("/policies")
     @RequestMapping(value = "/policies", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getAllPolicies() {
         ArrayList<Asset> assets = fabricService.getAllAssets();
@@ -80,13 +75,9 @@ public class ManagerController {
             PolicyInfo policyInfo = new PolicyInfo(asset.id, asset.name, asset.authorizedDevices, asset.authorizedUsers);
             policies.add(policyInfo);
         }
-        return new ResponseEntity<>(policies, HttpStatus.OK);
-        /*ArrayList<PolicyInfo> policies = new ArrayList<>();
-        policies.add(new PolicyInfo("uyefhj", "ghar", new ArrayList<>(), new ArrayList<>()));
-        return new ResponseEntity<>(policies, HttpStatus.OK);*/
+        return new ResponseEntity<>(getJsonString("policies", policies), HttpStatus.OK);
     }
 
-    //@PostMapping("/users")
     @RequestMapping(value = "/users", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity registerUser(@RequestBody ClientCredentials newUser){
         ClientCredentials cc = new ClientCredentials(newUser.email, newUser.password);
@@ -94,7 +85,6 @@ public class ManagerController {
         return new ResponseEntity<>(getJsonString("User successfully registered!"), HttpStatus.OK);
     }
 
-    //@PutMapping("/users/signin")
     @RequestMapping(value = "/users/signin", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> signinUser(@RequestBody ClientCredentials user){
         for(ClientCredentials cc: registeredUsers){
@@ -105,7 +95,6 @@ public class ManagerController {
         return new ResponseEntity<>(getJsonString("Authentication failed. Please enter valid email ID and password."), HttpStatus.UNAUTHORIZED);
     }
 
-    //@PostMapping("/clients")
     @RequestMapping(value = "/clients", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity registerClient(@RequestBody ClientCredentials newUser){
         ClientCredentials cc = new ClientCredentials(newUser.email, newUser.password);
@@ -115,7 +104,13 @@ public class ManagerController {
 
     private String getJsonString(String message){
         JSONObject jsonObj = new JSONObject();
-        jsonObj.put("Response", message);
+        jsonObj.put("response", message);
+        return jsonObj.toString();
+    }
+
+    private String getJsonString(String key, Object value){
+        JSONObject jsonObj = new JSONObject();
+        jsonObj.put(key, value);
         return jsonObj.toString();
     }
 }

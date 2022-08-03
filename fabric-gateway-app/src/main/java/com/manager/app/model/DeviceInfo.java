@@ -6,7 +6,7 @@ public class DeviceInfo {
     public String name;
     public String region;
     public String ipfs;
-    public String updatedAt;
+    public String updated_at;
 
     public DeviceInfo(String id, String owner, String name, String region, String ipfs, String updatedAt) {
         this.id = id;
@@ -14,7 +14,7 @@ public class DeviceInfo {
         this.name = name;
         this.region = region;
         this.ipfs = ipfs;
-        this.updatedAt = updatedAt;
+        this.updated_at = updatedAt;
     }
 
     public String getId() {
@@ -57,11 +57,11 @@ public class DeviceInfo {
         this.ipfs = ipfs;
     }
 
-    public String getUpdatedAt() {
-        return updatedAt;
+    public String getUpdated_at() {
+        return updated_at;
     }
 
-    public void setUpdatedAt(String updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setUpdated_at(String updated_at) {
+        this.updated_at = updated_at;
     }
 }
