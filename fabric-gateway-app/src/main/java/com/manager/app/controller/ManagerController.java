@@ -37,7 +37,7 @@ public class ManagerController {
             return new ResponseEntity<>(getJsonString("Access policy updated!"), HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/ipfs-hash/{deviceId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/ipfs-hash/{deviceId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity fetchIPFSHashForDevice(@PathVariable String deviceId, @RequestBody ClientCredentials clientCredentials) {
         for(ClientCredentials cc: registeredClients){
             if(cc.email.equals(clientCredentials.email) && cc.password.equals(clientCredentials.password)){
