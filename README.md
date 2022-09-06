@@ -199,7 +199,7 @@ Response body:
 
 `400 Bad Request` for failed retrieval
 
-## API Contract for Manager Node and Web Portal
+## API Contract for Manager Node and IoT Device
 
 - Update IPFS hash
 
