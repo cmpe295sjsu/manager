@@ -44,12 +44,6 @@ Request body:
 Response:
 
 `200 OK` for successful registration
-Response body:
-```json
-{
-    "token": "<jwt>"
-}
-```
 
 `400 Bad Request` for failed registration
 
