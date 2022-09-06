@@ -1,14 +1,17 @@
 package com.manager.app.model;
 
-public class ClientCredentials {
-    public String email;
-    public String password;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-    public ClientCredentials() {
-    }
+@Document(collection = "client")
+public class Client {
+    @Id
+    private String id;
+    private String email;
+    private String password;
 
-    public ClientCredentials(String emailId, String password) {
-        this.email = emailId;
+    public Client(String email, String password) {
+        this.email = email;
         this.password = password;
     }
 

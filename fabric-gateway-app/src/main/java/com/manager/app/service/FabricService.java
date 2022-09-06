@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
+import com.manager.app.model.FabricProperties;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
@@ -23,9 +24,9 @@ import org.hyperledger.fabric.client.identity.Signer;
 import org.hyperledger.fabric.client.identity.Signers;
 import org.hyperledger.fabric.client.identity.X509Identity;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -37,32 +38,21 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 @Service
-public final class FabricService {
-    private final String mspID = "Org1MSP";
-    private final String channelName = "mychannel";
-    private final String chaincodeName = "basic";
-    private final Path parentPath = Paths.get("/Users/deepakravi/go/src/github.com/sandhya1902/fabric-samples/");
-    private Path cryptoPath = parentPath.resolve(Paths.get("test-network", "organizations", "peerOrganizations", "org1.example.com"));
-    // Path to user certificate.
-    private Path certPath = cryptoPath.resolve(Paths.get("users", "Admin@org1.example.com", "msp", "signcerts", "Admin@org1.example.com-cert.pem"));
-    // Path to user private key directory.
-    private Path keyDirPath = cryptoPath.resolve(Paths.get("users", "Admin@org1.example.com", "msp", "keystore"));
-    // Path to peer tls certificate.
-    private Path tlsCertPath = cryptoPath.resolve(Paths.get("peers", "peer0.org1.example.com", "tls", "ca.crt"));
-
-    // Gateway peer end point.
-    private String peerEndpoint = "localhost:7051";
-    private String overrideAuth = "peer0.org1.example.com";
-
-    //@Autowired
-    //private static FabricProperties fabricProperties;
-    private final Contract contract;
+public class FabricService {
+    @Autowired
+    private FabricProperties fabricProperties;
+    private Contract contract;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private ObjectMapper mapper = new ObjectMapper();
+    private Path fabricParentPath;
+    private Path fabricCryptoPath;
 
-    public FabricService() throws Exception {
+    @PostConstruct
+    public void initFabricConnection() throws Exception {
         // The gRPC client connection should be shared by all Gateway connections to
         // this endpoint.
+        fabricParentPath = Paths.get(fabricProperties.getParentPath());
+        fabricCryptoPath = fabricParentPath.resolve(Paths.get(fabricProperties.getCryptoPath()));
         var channel = newGrpcConnection();
         var builder = Gateway.newInstance().identity(newIdentity()).signer(newSigner()).connection(channel)
                 // Default timeouts for different gRPC calls
@@ -72,25 +62,25 @@ public final class FabricService {
                 .commitStatusOptions(options -> options.withDeadlineAfter(1, TimeUnit.MINUTES));
 
         Gateway gateway = builder.connect();
-        var network = gateway.getNetwork(channelName);
+        var network = gateway.getNetwork(fabricProperties.getChannelName());
         // Get the smart contract from the network.
-        contract = network.getContract(chaincodeName);
+        contract = network.getContract(fabricProperties.getChaincodeName());
     }
 
     private ManagedChannel newGrpcConnection() throws IOException, CertificateException {
-        var tlsCertReader = Files.newBufferedReader(tlsCertPath);
+        var tlsCertReader = Files.newBufferedReader(fabricCryptoPath.resolve(Paths.get(fabricProperties.getTlscertPath())));
         var tlsCert = Identities.readX509Certificate(tlsCertReader);
 
-        return NettyChannelBuilder.forTarget(peerEndpoint)
-                .sslContext(GrpcSslContexts.forClient().trustManager(tlsCert).build()).overrideAuthority(overrideAuth)
+        return NettyChannelBuilder.forTarget(fabricProperties.getPeerEndpoint())
+                .sslContext(GrpcSslContexts.forClient().trustManager(tlsCert).build()).overrideAuthority(fabricProperties.getOverrideAuth())
                 .build();
     }
 
     private Identity newIdentity() throws IOException, CertificateException {
-        var certReader = Files.newBufferedReader(certPath);
+        var certReader = Files.newBufferedReader(fabricCryptoPath.resolve(Paths.get(fabricProperties.getCertPath())));
         var certificate = Identities.readX509Certificate(certReader);
 
-        return new X509Identity(mspID, certificate);
+        return new X509Identity(fabricProperties.getMspId(), certificate);
     }
 
     private Signer newSigner() throws IOException, InvalidKeyException {
@@ -101,7 +91,7 @@ public final class FabricService {
     }
 
     private Path getPrivateKeyPath() throws IOException {
-        try (var keyFiles = Files.list(keyDirPath)) {
+        try (var keyFiles = Files.list(fabricCryptoPath.resolve(Paths.get(fabricProperties.getKeyPath())))) {
             return keyFiles.findFirst().orElseThrow();
         }
     }
@@ -177,25 +167,10 @@ public final class FabricService {
         }
     }
 
-    //TODO fetchIPFSHashForDeviceFromUser returns a string - prettyJson(..) may not work here
-    /*public String fetchIPFSHashFromUser(String userEmail, String targetDeviceId){
-        System.out.println("\n--> Submit Transaction: fetchIPFSHashFromUser");
-        try {
-            byte[] evaluateResult = contract.evaluateTransaction("fetchIPFSHashForDeviceFromUser", userEmail, targetDeviceId);
-            System.out.println("******** fetchIPFSHashFromUser transaction committed successfully");
-            System.out.println("result formatted  "+new String(evaluateResult, StandardCharsets.UTF_8));
-            return prettyJson(evaluateResult);
-        } catch (GatewayException e) {
-            System.out.println(e.getMessage());
-            e.printStackTrace();
-            return "Error fetching IPFS hash: " + e.getMessage();
-        }
-    }*/
-
     public String fetchIPFSHashFromUser(String userEmail, String targetDeviceId){
         Asset asset = readAsset(targetDeviceId);
         if (asset == null){
-            return "Error updating policy: either this ID doesn't exist or there was an issue on Fabric side while reading asset.";
+            return "Error updating policy: either this device ID doesn't exist or there was an issue on Fabric side while reading asset.";
         }
         for(String email: asset.authorizedUsers){
             if (userEmail.equals(email)){

@@ -1,37 +1,99 @@
 package com.manager.app.model;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.EnvironmentAware;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
-//@Component
-//@PropertySource("classpath:application.properties")
-@Configuration
-@ConfigurationProperties
+@Component
+@ConfigurationProperties("fabric")
 public class FabricProperties {
+    private String mspId;
+    private String channelName;
+    private String chaincodeName;
+    private String parentPath;
+    private String cryptoPath;
+    private String certPath;
+    private String keyPath;
+    private String tlscertPath;
+    private String peerEndpoint;
+    private String overrideAuth;
 
-    public final String mspID = "Org1MSP";
-    public final String channelName = "mychannel";
-    public final String chaincodeName = "basic";
-    // TODO add path to your local fabric-samples directory
-    public final Path parentPath = Paths.get("../fabric-samples/");
-    public Path cryptoPath = parentPath.resolve(Paths.get("test-network", "organizations", "peerOrganizations", "org1.example.com"));
-    // Path to user certificate.
-    public Path certPath = cryptoPath.resolve(Paths.get("users", "Admin@org1.example.com", "msp", "signcerts", "Admin@org1.example.com-cert.pem"));
-    // Path to user private key directory.
-    public Path keyDirPath = cryptoPath.resolve(Paths.get("users", "Admin@org1.example.com", "msp", "keystore"));
-    // Path to peer tls certificate.
-    public Path tlsCertPath = cryptoPath.resolve(Paths.get("peers", "peer0.org1.example.com", "tls", "ca.crt"));
+    public String getMspId() {
+        return mspId;
+    }
 
-    // Gateway peer end point.
-    public String peerEndpoint = "localhost:7051";
-    public String overrideAuth = "peer0.org1.example.com";
+    public void setMspId(String mspId) {
+        this.mspId = mspId;
+    }
+
+    public String getChannelName() {
+        return channelName;
+    }
+
+    public void setChannelName(String channelName) {
+        this.channelName = channelName;
+    }
+
+    public String getChaincodeName() {
+        return chaincodeName;
+    }
+
+    public void setChaincodeName(String chaincodeName) {
+        this.chaincodeName = chaincodeName;
+    }
+
+    public String getParentPath() {
+        return parentPath;
+    }
+
+    public void setParentPath(String parentPath) {
+        this.parentPath = parentPath;
+    }
+
+    public String getCryptoPath() {
+        return cryptoPath;
+    }
+
+    public void setCryptoPath(String cryptoPath) {
+        this.cryptoPath = cryptoPath;
+    }
+
+    public String getCertPath() {
+        return certPath;
+    }
+
+    public void setCertPath(String certPath) {
+        this.certPath = certPath;
+    }
+
+    public String getKeyPath() {
+        return keyPath;
+    }
+
+    public void setKeyPath(String keyPath) {
+        this.keyPath = keyPath;
+    }
+
+    public String getTlscertPath() {
+        return tlscertPath;
+    }
+
+    public void setTlscertPath(String tlscertPath) {
+        this.tlscertPath = tlscertPath;
+    }
+
+    public String getPeerEndpoint() {
+        return peerEndpoint;
+    }
+
+    public void setPeerEndpoint(String peerEndpoint) {
+        this.peerEndpoint = peerEndpoint;
+    }
+
+    public String getOverrideAuth() {
+        return overrideAuth;
+    }
+
+    public void setOverrideAuth(String overrideAuth) {
+        this.overrideAuth = overrideAuth;
+    }
 }

@@ -1,10 +1,13 @@
 package com.manager.app.controller;
 
 import com.manager.app.model.*;
+import com.manager.app.repository.ClientsRepository;
+import com.manager.app.repository.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import com.manager.app.service.FabricService;
 import java.util.ArrayList;
@@ -14,10 +17,16 @@ import org.json.JSONObject;
 public class ManagerController {
 
     @Autowired
-    FabricService fabricService;
+    private FabricService fabricService;
 
-    ArrayList<ClientCredentials> registeredUsers = new ArrayList<>();
-    ArrayList<ClientCredentials> registeredClients = new ArrayList<>();
+    @Autowired
+    private UsersRepository usersRepository;
+
+    @Autowired
+    private ClientsRepository clientsRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @RequestMapping(value = "/devices", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity registerNewDevice(@RequestBody DeviceRegistrationInfo deviceInfo) {
@@ -39,15 +48,14 @@ public class ManagerController {
 
     @RequestMapping(value = "/ipfs-hash/{deviceId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity fetchIPFSHashForDevice(@PathVariable String deviceId, @RequestBody ClientCredentials clientCredentials) {
-        for(ClientCredentials cc: registeredClients){
-            if(cc.email.equals(clientCredentials.email) && cc.password.equals(clientCredentials.password)){
-                String result = fabricService.fetchIPFSHashFromUser(clientCredentials.email, deviceId);
-                if(result.contains("Error"))
-                    return new ResponseEntity<>(getJsonString(result), HttpStatus.BAD_REQUEST);
-                if(result.contains("Unauthorized"))
-                    return new ResponseEntity<>(getJsonString(result), HttpStatus.UNAUTHORIZED);
-                return new ResponseEntity<>(getJsonString("ipfsHash", result), HttpStatus.OK);
-            }
+        Client client = clientsRepository.findByEmail(clientCredentials.email);
+        if (client != null && bCryptPasswordEncoder.matches(clientCredentials.password, client.getPassword())){
+            String result = fabricService.fetchIPFSHashFromUser(clientCredentials.email, deviceId);
+            if(result.contains("Error"))
+                return new ResponseEntity<>(getJsonString(result), HttpStatus.BAD_REQUEST);
+            if(result.contains("Unauthorized"))
+                return new ResponseEntity<>(getJsonString(result), HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(getJsonString("ipfsHash", result), HttpStatus.OK);
         }
         return new ResponseEntity<>(getJsonString("Authentication failed. Please enter valid email ID and password."), HttpStatus.UNAUTHORIZED);
     }
@@ -80,25 +88,21 @@ public class ManagerController {
 
     @RequestMapping(value = "/users", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity registerUser(@RequestBody ClientCredentials newUser){
-        ClientCredentials cc = new ClientCredentials(newUser.email, newUser.password);
-        registeredUsers.add(cc);
+        String encodedPassword = bCryptPasswordEncoder.encode(newUser.password);
+        User user = new User(newUser.email, encodedPassword);
+        usersRepository.save(user);
         return new ResponseEntity<>(getJsonString("User successfully registered!"), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/users/signin", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> signinUser(@RequestBody ClientCredentials user){
-        for(ClientCredentials cc: registeredUsers){
-            if(cc.email.equals(user.email) && cc.password.equals(user.password)){
-                return new ResponseEntity<>(getJsonString("Successful"), HttpStatus.OK);
-            }
-        }
-        return new ResponseEntity<>(getJsonString("Authentication failed. Please enter valid email ID and password."), HttpStatus.UNAUTHORIZED);
+    public void signinUser(@RequestBody ClientCredentials cc){
     }
 
     @RequestMapping(value = "/clients", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity registerClient(@RequestBody ClientCredentials newUser){
-        ClientCredentials cc = new ClientCredentials(newUser.email, newUser.password);
-        registeredClients.add(cc);
+    public ResponseEntity registerClient(@RequestBody ClientCredentials cc){
+        String encodedPassword = bCryptPasswordEncoder.encode(cc.password);
+        Client client = new Client(cc.email, encodedPassword);
+        clientsRepository.save(client);
         return new ResponseEntity<>(getJsonString("Client successfully registered!"), HttpStatus.OK);
     }
 
