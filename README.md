@@ -219,9 +219,9 @@ Response:
 
 `403 Forbidden` for failed update due to device not allowed to update IPFS hash
 
-- Fetch device IPFS hash
+- Fetch device IPFS hash for other IoT device based on access
 
-`[PUT] iot/ifps-hash`
+`[PUT] iot/data-access`
 ```json
 {
     "device-id": "<device_id>",
