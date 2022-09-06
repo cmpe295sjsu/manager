@@ -208,7 +208,7 @@ Response body:
 Request body:
 ```json
 {
-    "device_id": "<device_id>",
+    "device-id": "<device id>",
     "device-key": "<device key>",
     "ipfs-hash": "<IPFS hash>"
 }
@@ -224,7 +224,7 @@ Response:
 `[PUT] iot/data-access`
 ```json
 {
-    "device-id": "<device_id>",
+    "device-id": "<device id>",
     "device-key": "<device key>"
 }
 ```
