@@ -199,6 +199,45 @@ Response body:
 
 `400 Bad Request` for failed retrieval
 
+## API Contract for Manager Node and Web Portal
+
+- Update IPFS hash
+
+`[PUT] /iot/ifps-hash`
+
+Request body:
+```json
+{
+    "device-key": "<device key>",
+    "ipfs-hash": "<IPFS hash>"
+}
+```
+
+Response:
+`200 OK` for successful update
+
+`403 Forbidden` for failed update due to device not allowed to update IPFS hash
+
+- Fetch device IPFS hash
+
+`[PUT] iot/ifps-hash/{device_id}`
+```json
+{
+    "device-key": "<device key>"
+}
+```
+
+Response:
+`200 OK` for successful retrieval with IPFS hash
+```json
+{
+    "ipfs-hash": "<IFPS hash>"
+}
+```
+
+`401 Unauthorized` if device not allowed access
+
+
 ## Steps to run Manager app
 
 - Add the path to your local fabric-samples directory in FabricService class ("parentPath")
