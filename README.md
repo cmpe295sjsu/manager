@@ -208,6 +208,7 @@ Response body:
 Request body:
 ```json
 {
+    "device_id": "<device_id>",
     "device-key": "<device key>",
     "ipfs-hash": "<IPFS hash>"
 }
@@ -220,9 +221,10 @@ Response:
 
 - Fetch device IPFS hash
 
-`[PUT] iot/ifps-hash/{device_id}`
+`[PUT] iot/ifps-hash`
 ```json
 {
+    "device-id": "<device_id>",
     "device-key": "<device key>"
 }
 ```
