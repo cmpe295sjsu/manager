@@ -209,7 +209,7 @@ Request body:
 ```json
 {
     "device-id": "<device id>",
-    "device-key": "<device key>",
+    "api-key": "<api key>",
     "ipfs-hash": "<IPFS hash>"
 }
 ```
@@ -225,7 +225,7 @@ Response:
 ```json
 {
     "device-id": "<device id>",
-    "device-key": "<device key>"
+    "api-key": "<api key>"
 }
 ```
 
