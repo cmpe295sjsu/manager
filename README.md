@@ -214,9 +214,9 @@ Response body:
 Request body:
 ```json
 {
-    "device-id": "<device id>",
-    "api-key": "<api key>",
-    "ipfs-hash": "<IPFS hash>"
+    "device_id": "<device id>",
+    "api_key": "<api key>",
+    "ipfs_hash": "<IPFS hash>"
 }
 ```
 
