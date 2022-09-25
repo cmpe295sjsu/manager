@@ -87,6 +87,12 @@ Request body:
 Response:
 
 `200 OK` for successful registration
+```json
+{
+    "deviceID": "<device_id>",
+    "apiKey": "<api_key>"
+}
+```
 
 `400 Bad Request` for failed registration
 
