@@ -96,11 +96,24 @@ public class FabricService {
         }
     }
 
-    public String createAsset(String owner, String name, String region) {
+    /*public String createAsset(String owner, String name, String region) {
         System.out.println("\n--> Submit Transaction: createAsset");
         byte[] result;
         try {
             result = contract.submitTransaction("CreateNewDevice", owner, name, region);
+            return new String(result, StandardCharsets.UTF_8);
+        } catch (EndorseException | SubmitException | CommitStatusException | CommitException e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+            return "Error while registering new device: " + e.getMessage();
+        }
+    }*/
+
+    public String createAsset(String id, String owner, String name, String region) {
+        System.out.println("\n--> Submit Transaction: createAsset");
+        byte[] result;
+        try {
+            result = contract.submitTransaction("CreateNewDeviceWithId", id, owner, name, region);
             return new String(result, StandardCharsets.UTF_8);
         } catch (EndorseException | SubmitException | CommitStatusException | CommitException e) {
             System.out.println(e.getMessage());
@@ -146,6 +159,13 @@ public class FabricService {
         }
     }
 
+    /**
+     * authorizedDevices and authorizedUsers represent the new (or delta) devices and users to be added to the access policy
+     * @param deviceId
+     * @param authorizedDevices
+     * @param authorizedUsers
+     * @return
+     */
     public String updateAccessPolicy(String deviceId, ArrayList<String> authorizedDevices,
                                     ArrayList<String> authorizedUsers) {
         try {
@@ -178,6 +198,24 @@ public class FabricService {
             }
         }
         return "Unauthorized: This user is not authorized to access requested device.";
+    }
+
+    public String pushIPFSHashToFabric(String deviceId, String hash){
+        try {
+            System.out.println("\n--> Submit Transaction: pushIPFSHashToFabric");
+            Asset originalAsset = readAsset(deviceId);
+            if (originalAsset == null){
+                return "Error updating policy: either this device ID doesn't exist or there was an issue on the Fabric side while reading the asset.";
+            }
+            contract.submitTransaction("UpdateAsset", deviceId, originalAsset.owner, originalAsset.name, originalAsset.region,
+                    hash, new Gson().toJson(originalAsset.authorizedDevices), new Gson().toJson(originalAsset.authorizedUsers));
+            System.out.println("******** pushIPFSHashToFabric transaction committed successfully");
+            return "Success";
+        } catch (EndorseException | SubmitException | CommitStatusException | CommitException e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+            return "Error updating the IPFS hash: " + e.getMessage();
+        }
     }
 
     /*public String fetchIPFSHashFromDevice(String requestingDeviceId, String targetDeviceId){

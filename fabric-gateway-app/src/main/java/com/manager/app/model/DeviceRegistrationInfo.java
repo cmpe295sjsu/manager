@@ -1,14 +1,24 @@
 package com.manager.app.model;
 
 public class DeviceRegistrationInfo {
+    public String id;
     public String owner;
     public String name;
     public String region;
 
-    public DeviceRegistrationInfo(String owner, String name, String region) {
+    public DeviceRegistrationInfo(String id, String owner, String name, String region) {
+        this.id = id;
         this.owner = owner;
         this.name = name;
         this.region = region;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getOwner() {

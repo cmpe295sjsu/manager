@@ -2,7 +2,9 @@ package com.manager.app.controller;
 
 import com.manager.app.model.*;
 import com.manager.app.repository.ClientsRepository;
+import com.manager.app.repository.DeviceKeyRepository;
 import com.manager.app.repository.UsersRepository;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -11,6 +13,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import com.manager.app.service.FabricService;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.json.JSONObject;
 
 @RestController
@@ -26,15 +31,31 @@ public class ManagerController {
     private ClientsRepository clientsRepository;
 
     @Autowired
+    private DeviceKeyRepository deviceKeyRepository;
+
+    @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    private static final String ORG_NAME = "SJSU";
 
     @RequestMapping(value = "/devices", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity registerNewDevice(@RequestBody DeviceRegistrationInfo deviceInfo) {
-        String result = fabricService.createAsset(deviceInfo.owner, deviceInfo.name, deviceInfo.region);
+        String key = getKeyForOrg(ORG_NAME);
+        if(key == null){
+            key = generateApiKey();
+            deviceKeyRepository.save(new DeviceKey(key, ORG_NAME));
+        }
+
+        String result = fabricService.createAsset(deviceInfo.id, deviceInfo.owner, deviceInfo.name, deviceInfo.region);
         if(result.contains("Error"))
             return new ResponseEntity<>(getJsonString(result), HttpStatus.BAD_REQUEST);
         else
-            return new ResponseEntity<>(getJsonString("deviceID", result), HttpStatus.OK);
+        {
+            Map<String, Object> keyMap = new HashMap<>();
+            keyMap.put("deviceID", deviceInfo.id);
+            keyMap.put("apiKey", key);
+            return new ResponseEntity<>(getJsonString(keyMap), HttpStatus.OK);
+        }
     }
 
     @RequestMapping(value = "/policies", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -106,6 +127,18 @@ public class ManagerController {
         return new ResponseEntity<>(getJsonString("Client successfully registered!"), HttpStatus.OK);
     }
 
+    @RequestMapping(value = "/iot/ipfs-hash", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity updateHash(@RequestBody DeviceIPFSHashInfo deviceIPFSHashInfo){
+        if(validateApiKeyForDevice(ORG_NAME, deviceIPFSHashInfo.api_key)){
+            String result = fabricService.pushIPFSHashToFabric(deviceIPFSHashInfo.device_id, deviceIPFSHashInfo.ipfs_hash);
+            if(result.contains("Error"))
+                return new ResponseEntity<>(getJsonString(result), HttpStatus.BAD_REQUEST);
+            else
+                return new ResponseEntity<>(getJsonString("IPFS hash updated!"), HttpStatus.OK);
+        }
+        return new ResponseEntity<>(getJsonString("API key is not valid for this device. Please provide correct device ID and key."), HttpStatus.FORBIDDEN);
+    }
+
     private String getJsonString(String message){
         JSONObject jsonObj = new JSONObject();
         jsonObj.put("response", message);
@@ -116,5 +149,29 @@ public class ManagerController {
         JSONObject jsonObj = new JSONObject();
         jsonObj.put(key, value);
         return jsonObj.toString();
+    }
+
+    private String getJsonString(Map<String, Object> mapValues){
+        JSONObject jsonObj = new JSONObject();
+        for (String key: mapValues.keySet())
+            jsonObj.put(key, mapValues.get(key));
+        return jsonObj.toString();
+    }
+
+    String generateApiKey(){
+        String generatedString = RandomStringUtils.randomAlphanumeric(10);
+        return generatedString;
+    }
+
+    String getKeyForOrg(String org){
+        DeviceKey deviceKey = deviceKeyRepository.findByOrg(org);
+        if(deviceKey != null)
+            return deviceKey.getKey();
+        return null;
+    }
+
+    // TODO for now, using only one key per organization.
+    boolean validateApiKeyForDevice(String orgName, String apiKey){
+        return apiKey.equals(getKeyForOrg(orgName));
     }
 }
