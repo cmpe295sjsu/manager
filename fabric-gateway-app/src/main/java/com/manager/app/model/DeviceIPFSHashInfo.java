@@ -1,12 +1,14 @@
 package com.manager.app.model;
 
+import java.util.ArrayList;
+
 public class DeviceIPFSHashInfo {
 
     public String device_id;
     public String api_key;
-    public String ipfs_hash;
+    public ArrayList<String> ipfs_hash;
 
-    public DeviceIPFSHashInfo(String device_id, String api_key, String ipfs_hash) {
+    public DeviceIPFSHashInfo(String device_id, String api_key, ArrayList<String> ipfs_hash) {
         this.device_id = device_id;
         this.api_key = api_key;
         this.ipfs_hash = ipfs_hash;
@@ -28,11 +30,11 @@ public class DeviceIPFSHashInfo {
         this.api_key = api_key;
     }
 
-    public String getIpfs_hash() {
+    public ArrayList<String> getIpfs_hash() {
         return ipfs_hash;
     }
 
-    public void setIpfs_hash(String ipfs_hash) {
+    public void setIpfs_hash(ArrayList<String> ipfs_hash) {
         this.ipfs_hash = ipfs_hash;
     }
 }

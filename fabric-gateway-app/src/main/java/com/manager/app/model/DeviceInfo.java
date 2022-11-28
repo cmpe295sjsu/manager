@@ -1,14 +1,16 @@
 package com.manager.app.model;
 
+import java.util.ArrayList;
+
 public class DeviceInfo {
     public String id;
     public String owner;
     public String name;
     public String region;
-    public String ipfs;
+    public ArrayList<String> ipfs;
     public String updated_at;
 
-    public DeviceInfo(String id, String owner, String name, String region, String ipfs, String updatedAt) {
+    public DeviceInfo(String id, String owner, String name, String region, ArrayList<String> ipfs, String updatedAt) {
         this.id = id;
         this.owner = owner;
         this.name = name;
@@ -49,11 +51,11 @@ public class DeviceInfo {
         this.region = region;
     }
 
-    public String getIpfs() {
+    public ArrayList<String> getIpfs() {
         return ipfs;
     }
 
-    public void setIpfs(String ipfs) {
+    public void setIpfs(ArrayList<String> ipfs) {
         this.ipfs = ipfs;
     }
 

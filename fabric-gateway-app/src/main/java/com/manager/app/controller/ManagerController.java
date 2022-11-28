@@ -71,12 +71,13 @@ public class ManagerController {
     public ResponseEntity fetchIPFSHashForDevice(@PathVariable String deviceId, @RequestBody ClientCredentials clientCredentials) {
         Client client = clientsRepository.findByEmail(clientCredentials.email);
         if (client != null && bCryptPasswordEncoder.matches(clientCredentials.password, client.getPassword())){
-            String result = fabricService.fetchIPFSHashFromUser(clientCredentials.email, deviceId);
+            String result = fabricService.fetchIPFSHashForUserIfAuthorized(clientCredentials.email, deviceId);
             if(result.contains("Error"))
                 return new ResponseEntity<>(getJsonString(result), HttpStatus.BAD_REQUEST);
             if(result.contains("Unauthorized"))
                 return new ResponseEntity<>(getJsonString(result), HttpStatus.UNAUTHORIZED);
-            return new ResponseEntity<>(getJsonString("ipfsHash", result), HttpStatus.OK);
+            String[] hashes = result.split(FabricService.STRING_DELIMITER);
+            return new ResponseEntity<>(getJsonString("ipfsHash", hashes), HttpStatus.OK);
         }
         return new ResponseEntity<>(getJsonString("Authentication failed. Please enter valid email ID and password."), HttpStatus.UNAUTHORIZED);
     }
@@ -88,7 +89,7 @@ public class ManagerController {
             return new ResponseEntity<>(getJsonString("Error fetching list of devices"), HttpStatus.INTERNAL_SERVER_ERROR);
         ArrayList<DeviceInfo> devices = new ArrayList<>();
         for(Asset asset: assets){
-            DeviceInfo deviceInfo = new DeviceInfo(asset.id, asset.owner, asset.name, asset.region, asset.iPFSHash, asset.updatedAt);
+            DeviceInfo deviceInfo = new DeviceInfo(asset.id, asset.owner, asset.name, asset.region, asset.iPFSHashList, asset.updatedAt);
             devices.add(deviceInfo);
         }
         return new ResponseEntity<>(getJsonString("devices", devices), HttpStatus.OK);
@@ -130,7 +131,7 @@ public class ManagerController {
     @RequestMapping(value = "/iot/ipfs-hash", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity updateHash(@RequestBody DeviceIPFSHashInfo deviceIPFSHashInfo){
         if(validateApiKeyForDevice(ORG_NAME, deviceIPFSHashInfo.api_key)){
-            String result = fabricService.pushIPFSHashToFabric(deviceIPFSHashInfo.device_id, deviceIPFSHashInfo.ipfs_hash);
+            String result = fabricService.updateIPFSHash(deviceIPFSHashInfo.device_id, deviceIPFSHashInfo.ipfs_hash);
             if(result.contains("Error"))
                 return new ResponseEntity<>(getJsonString(result), HttpStatus.BAD_REQUEST);
             else

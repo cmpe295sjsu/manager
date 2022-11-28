@@ -46,6 +46,7 @@ public class FabricService {
     private ObjectMapper mapper = new ObjectMapper();
     private Path fabricParentPath;
     private Path fabricCryptoPath;
+    public final static String STRING_DELIMITER = "#@#";
 
     @PostConstruct
     public void initFabricConnection() throws Exception {
@@ -177,7 +178,7 @@ public class FabricService {
             originalAsset.authorizedDevices.addAll(authorizedDevices);
             originalAsset.authorizedUsers.addAll(authorizedUsers);
             contract.submitTransaction("UpdateAsset", deviceId, originalAsset.owner, originalAsset.name, originalAsset.region,
-                    originalAsset.iPFSHash, new Gson().toJson(originalAsset.authorizedDevices), new Gson().toJson(originalAsset.authorizedUsers));
+                    new Gson().toJson(originalAsset.iPFSHashList), new Gson().toJson(originalAsset.authorizedDevices), new Gson().toJson(originalAsset.authorizedUsers));
             System.out.println("******** updateAccessPolicy transaction committed successfully");
             return "Success";
         } catch (EndorseException | SubmitException | CommitStatusException | CommitException e) {
@@ -187,25 +188,44 @@ public class FabricService {
         }
     }
 
-    public String fetchIPFSHashFromUser(String userEmail, String targetDeviceId){
+    public String updateIPFSHash(String deviceId, ArrayList<String> hashes) {
+        try {
+            System.out.println("\n--> Submit Transaction: updateIPFSHash");
+            Asset originalAsset = readAsset(deviceId);
+            if (originalAsset == null){
+                return "Error updating IPFS hash: either this device ID doesn't exist or there was an issue on the Fabric side while reading the asset.";
+            }
+            originalAsset.iPFSHashList.addAll(hashes);
+            contract.submitTransaction("UpdateAsset", deviceId, originalAsset.owner, originalAsset.name, originalAsset.region,
+                    new Gson().toJson(originalAsset.iPFSHashList), new Gson().toJson(originalAsset.authorizedDevices), new Gson().toJson(originalAsset.authorizedUsers));
+            System.out.println("******** updateIPFSHash transaction committed successfully");
+            return "Success";
+        } catch (EndorseException | SubmitException | CommitStatusException | CommitException e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+            return "Error updating IPFS hash: " + e.getMessage();
+        }
+    }
+
+    public String fetchIPFSHashForUserIfAuthorized(String userEmail, String targetDeviceId){
         Asset asset = readAsset(targetDeviceId);
         if (asset == null){
-            return "Error updating policy: either this device ID doesn't exist or there was an issue on Fabric side while reading asset.";
+            return "Error fetching IPFS hash: either this device ID doesn't exist or there was an issue on Fabric side while reading asset.";
         }
         for(String email: asset.authorizedUsers){
             if (userEmail.equals(email)){
-                return asset.iPFSHash;
+                return String.join(STRING_DELIMITER, asset.iPFSHashList);
             }
         }
         return "Unauthorized: This user is not authorized to access requested device.";
     }
 
-    public String pushIPFSHashToFabric(String deviceId, String hash){
+    /*public String pushIPFSHashToFabric(String deviceId, String hash){
         try {
             System.out.println("\n--> Submit Transaction: pushIPFSHashToFabric");
             Asset originalAsset = readAsset(deviceId);
             if (originalAsset == null){
-                return "Error updating policy: either this device ID doesn't exist or there was an issue on the Fabric side while reading the asset.";
+                return "Error updating IPFS hash: either this device ID doesn't exist or there was an issue on the Fabric side while reading the asset.";
             }
             contract.submitTransaction("UpdateAsset", deviceId, originalAsset.owner, originalAsset.name, originalAsset.region,
                     hash, new Gson().toJson(originalAsset.authorizedDevices), new Gson().toJson(originalAsset.authorizedUsers));
@@ -217,7 +237,7 @@ public class FabricService {
             return "Error updating the IPFS hash: " + e.getMessage();
         }
     }
-
+*/
     /*public String fetchIPFSHashFromDevice(String requestingDeviceId, String targetDeviceId){
         System.out.println("\n--> Submit Transaction: fetchIPFSHashFromDevice");
         try {

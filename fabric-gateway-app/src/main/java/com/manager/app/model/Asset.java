@@ -12,8 +12,8 @@ public class Asset {
     public String name;
     @JsonProperty("Region")
     public String region;
-    @JsonProperty("IPFSHash")
-    public String iPFSHash;
+    @JsonProperty("IPFSHashList")
+    public ArrayList<String> iPFSHashList;
     @JsonProperty("AuthorizedDevices")
     public ArrayList<String> authorizedDevices;
     @JsonProperty("AuthorizedUsers")
